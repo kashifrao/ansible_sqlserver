@@ -1,0 +1,44 @@
+#  == File: sqlserver.yml
+#
+# Install & Configure SQL Server
+#
+#  == Copyright
+#     All Rights Reserved
+#
+# --------------------------------------------------------------------------
+# WARNING: This file belongs to the Core framework. Avoid any local changes
+# --------------------------------------------------------------------------
+#
+# This file is Managed by ANSIBLE
+# --------------------------------------------------------------------------
+
+
+- name: "Curl SQL Server Repo"
+  shell: sudo curl -o /etc/yum.repos.d/mssql-server.repo https://packages.microsoft.com/config/rhel/8/mssql-server-2022.repo
+
+- name: Install SQL Server
+  yum: name=mssql-server state=installed
+
+- name: Start SQL Service
+  shell: sudo service mssql-server stop
+
+- name: "Remove Old SQL Server Tools"
+  shell: sudo ACCEPT_EULA='Y' MSSQL_PID='Developer' MSSQL_SA_PASSWORD='{{ master_pass }}' MSSQL_TCP_PORT=1433 /opt/mssql/bin/mssql-conf setup
+
+- name: Start SQL Service
+  service: name=mssql-server state=restarted
+
+- name: "Curl SQL Server Tools"
+  shell: curl https://packages.microsoft.com/config/rhel/8/prod.repo | sudo tee /etc/yum.repos.d/mssql-release.repo
+
+- name: "Remove Old SQL Server Tools"
+  shell: sudo yum -y remove mssql-tools
+
+- name: "Install New SQL Server Tools"
+  shell: sudo yum -y install mssql-tools18
+
+- name: "Install Update"
+  shell: sudo yum -y update
+
+- name: "Setting path for tools"
+  shell: echo 'export PATH="$PATH:/opt/mssql-tools18/bin"' >> ~/.bash_profile
